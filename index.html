@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Data TKA Tahun 2026</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f1f5f9; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .hidden-section { display: none; }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <!-- Navigation Bar -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="monitor" class="text-blue-600 w-6 h-6"></i>
+                    <span class="font-bold text-xl text-slate-800">TKA 2026</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="btn-view-public" onclick="switchView('public')" class="px-3 py-2 rounded-md text-sm font-medium text-blue-600 bg-blue-50">Public Monitor</button>
+                    <button id="btn-view-admin" onclick="switchView('admin')" class="px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:text-slate-900">Admin Dashboard</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- PUBLIC VIEW (MONITORING) -->
+    <div id="public-view" class="fade-in">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header -->
+            <div class="text-center mb-10">
+                <h1 class="text-3xl font-bold text-slate-900 mb-2">Monitor Pendataan TKA Tahun 2026</h1>
+                <p class="text-slate-600">Pantauan Real-time Progres Data MTs Kabupaten Probolinggo</p>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div onclick="filterPublicStatus('')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:scale-105 group">
+                    <div class="text-sm font-medium text-slate-500 mb-1">Total MTs</div>
+                    <div class="text-3xl font-bold text-slate-900" id="stat-total">0</div>
+                    <div class="text-xs text-blue-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Klik untuk lihat semua</div>
+                </div>
+                <div onclick="filterPublicStatus('sudah-tarik')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:scale-105 group">
+                    <div class="text-sm font-medium text-green-600 mb-1">Sudah Tarik</div>
+                    <div class="text-3xl font-bold text-green-700" id="stat-sudah">0</div>
+                    <div class="text-xs text-green-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Klik untuk filter</div>
+                </div>
+                <div onclick="filterPublicStatus('belum-tarik')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:scale-105 group">
+                    <div class="text-sm font-medium text-yellow-600 mb-1">Belum Tarik</div>
+                    <div class="text-3xl font-bold text-yellow-700" id="stat-belum">0</div>
+                    <div class="text-xs text-yellow-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Klik untuk filter</div>
+                </div>
+                <div onclick="filterPublicStatus('belum-login')" class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:shadow-md transition-all hover:scale-105 group">
+                    <div class="text-sm font-medium text-red-600 mb-1">Belum Login</div>
+                    <div class="text-3xl font-bold text-red-700" id="stat-login">0</div>
+                    <div class="text-xs text-red-500 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">Klik untuk filter</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Table & Filters -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Filters -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-slate-200 flex flex-wrap gap-4 items-end">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Pencarian</label>
+                            <div class="relative">
+                                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                                <input type="text" id="public-search" placeholder="Cari NSM, Madrasah..." class="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                            </div>
+                        </div>
+                        <div class="w-48">
+                            <label class="block text-sm font-medium text-slate-700 mb-1">Status Aktivitas</label>
+                            <select id="public-filter-status" class="w-full px-3 py-2 border border-slate-300 rounded-md focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="">Semua Status</option>
+                                <option value="sudah-tarik">Sudah Tarik</option>
+                                <option value="belum-tarik">Belum Tarik</option>
+                                <option value="belum-login">Belum Login</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto max-h-[600px]">
+                            <table class="w-full text-sm text-left">
+                                <thead class="text-xs text-slate-700 uppercase bg-slate-50 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-6 py-3 border-b">No</th>
+                                        <th class="px-6 py-3 border-b">NSM</th>
+                                        <th class="px-6 py-3 border-b">Madrasah</th>
+                                        <th class="px-6 py-3 border-b">Kecamatan</th>
+                                        <th class="px-6 py-3 border-b text-center">Siswa</th>
+                                        <th class="px-6 py-3 border-b">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="public-table-body" class="divide-y divide-slate-100">
+                                    <!-- Dynamic Content -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="public-empty-state" class="hidden p-8 text-center text-slate-500">
+                            Data tidak ditemukan.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Info -->
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-slate-200">
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-blue-600"></i> Statistik
+                        </h3>
+                        <ul class="space-y-3 text-sm">
+                            <li class="flex justify-between pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Tahun Pelajaran</span>
+                                <span class="font-medium">2025/2026</span>
+                            </li>
+                            <li class="flex justify-between pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Kabupaten</span>
+                                <span class="font-medium">Probolinggo</span>
+                            </li>
+                            <li class="flex justify-between pb-2 border-b border-slate-100">
+                                <span class="text-slate-600">Target Siswa</span>
+                                <span class="font-medium text-blue-600">8,456</span>
+                            </li>
+                            <li class="flex justify-between">
+                                <span class="text-slate-600">Progress Wilayah</span>
+                                <span class="font-medium">24 Kecamatan</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-blue-600 text-white p-5 rounded-lg shadow-md">
+                        <h3 class="font-bold text-lg mb-2">Informasi Penting</h3>
+                        <p class="text-sm text-blue-100 mb-4 leading-relaxed">
+                            Batas akhir penarikan data TKA Tahun 2026 adalah tanggal <strong>25 Januari 2026</strong>. 
+                            Mohon segera melakukan sinkronisasi data.
+                        </p>
+                        <button class="w-full bg-white text-blue-600 py-2 rounded font-medium text-sm hover:bg-blue-50 transition-colors">
+                            Unduh Juknis TKA
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN VIEW (DASHBOARD) -->
+    <div id="admin-view" class="hidden-section fade-in">
+        <div class="flex h-[calc(100vh-65px)]">
+            <!-- Sidebar -->
+            <div class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col">
+                <div class="p-6 border-b border-slate-800">
+                    <div class="font-bold text-white text-lg">Panel Admin</div>
+                    <div class="text-xs text-slate-500 mt-1">Operator Kabupaten</div>
+                </div>
+                <nav class="flex-1 p-4 space-y-1">
+                    <a href="#" onclick="showAdminSection('dashboard'); return false;" id="nav-dashboard" class="flex items-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+                    </a>
+                    <a href="#" onclick="showAdminSection('master-data'); return false;" id="nav-master-data" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg transition-colors">
+                        <i data-lucide="database" class="w-5 h-5"></i> Master Data
+                    </a>
+                    <a href="#" onclick="showAdminSection('pengaturan'); return false;" id="nav-pengaturan" class="flex items-center gap-3 px-4 py-3 hover:bg-slate-800 rounded-lg transition-colors">
+                        <i data-lucide="settings" class="w-5 h-5"></i> Pengaturan
+                    </a>
+                </nav>
+                <div class="p-4 border-t border-slate-800">
+                    <button class="flex items-center gap-3 text-red-400 hover:text-red-300 text-sm">
+                        <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Admin Content -->
+            <div class="flex-1 overflow-auto bg-slate-100 p-8">
+                
+                <!-- DASHBOARD SECTION -->
+                <div id="admin-section-dashboard">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-2xl font-bold text-slate-800">Input Database TKA</h2>
+                        <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2 shadow-sm">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Data Baru
+                        </button>
+                    </div>
+
+                <!-- Admin Stats Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-slate-500 text-sm font-medium">Total Entri</div>
+                            <div class="text-2xl font-bold text-slate-800" id="admin-count-total">0</div>
+                        </div>
+                        <div class="p-3 bg-blue-100 rounded-lg text-blue-600">
+                            <i data-lucide="file-text" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-slate-500 text-sm font-medium">Verifikasi</div>
+                            <div class="text-2xl font-bold text-green-600" id="admin-count-verified">32</div>
+                        </div>
+                        <div class="p-3 bg-green-100 rounded-lg text-green-600">
+                            <i data-lucide="check-circle" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                        <div>
+                            <div class="text-slate-500 text-sm font-medium">Pending</div>
+                            <div class="text-2xl font-bold text-yellow-600" id="admin-count-pending">16</div>
+                        </div>
+                        <div class="p-3 bg-yellow-100 rounded-lg text-yellow-600">
+                            <i data-lucide="clock" class="w-6 h-6"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Table Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200">
+                    <div class="p-6 border-b border-slate-200 flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <h3 class="font-bold text-lg">Data Madrasah Terdaftar</h3>
+                        <div class="relative">
+                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                            <input type="text" id="admin-search" placeholder="Cari data..." class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none w-64">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left">
+                            <thead class="bg-slate-50 text-slate-700 uppercase text-xs">
+                                <tr>
+                                    <th class="px-6 py-4 font-semibold">NSM</th>
+                                    <th class="px-6 py-4 font-semibold">Madrasah</th>
+                                    <th class="px-6 py-4 font-semibold">Kecamatan</th>
+                                    <th class="px-6 py-4 font-semibold">Operator</th>
+                                    <th class="px-6 py-4 font-semibold text-center">Jml Siswa</th>
+                                    <th class="px-6 py-4 font-semibold">Status</th>
+                                    <th class="px-6 py-4 font-semibold text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-table-body" class="divide-y divide-slate-100">
+                                <!-- Dynamic Content -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 rounded-b-xl flex justify-between items-center text-sm text-slate-500">
+                        <span>Menampilkan semua data</span>
+                        <div class="flex gap-2">
+                            <button class="px-3 py-1 border rounded bg-white disabled:opacity-50">Prev</button>
+                            <button class="px-3 py-1 border rounded bg-white hover:bg-slate-50">Next</button>
+                        </div>
+                    </div>
+                </div>
+                </div>
+                <!-- END DASHBOARD SECTION -->
+
+                <!-- MASTER DATA SECTION -->
+                <div id="admin-section-master-data" class="hidden-section">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">Master Data Lembaga</h2>
+                        <p class="text-slate-600">Upload dan kelola database lembaga MTs</p>
+                    </div>
+
+                    <!-- Upload Area -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 mb-6">
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <i data-lucide="upload-cloud" class="w-5 h-5 text-blue-600"></i>
+                            Upload File Database
+                        </h3>
+                        
+                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors">
+                            <div class="mb-4">
+                                <i data-lucide="file-spreadsheet" class="w-16 h-16 text-slate-400 mx-auto mb-3"></i>
+                                <p class="text-slate-700 font-medium mb-1">Klik untuk pilih file atau drag & drop</p>
+                                <p class="text-sm text-slate-500">Format: CSV, Excel (.xlsx, .xls) - Maksimal 5MB</p>
+                            </div>
+                            <input type="file" id="fileUpload" accept=".csv,.xlsx,.xls" class="hidden" onchange="handleFileUpload(event)">
+                            <button onclick="document.getElementById('fileUpload').click()" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2">
+                                <i data-lucide="folder-open" class="w-4 h-4"></i>
+                                Pilih File
+                            </button>
+                        </div>
+
+                        <div id="uploadProgress" class="hidden mt-4">
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-center gap-3">
+                                    <i data-lucide="loader" class="w-5 h-5 text-blue-600 animate-spin"></i>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-blue-900">Sedang mengupload file...</p>
+                                        <div class="w-full bg-blue-200 rounded-full h-2 mt-2">
+                                            <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="uploadSuccess" class="hidden mt-4">
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+                                <i data-lucide="check-circle" class="w-5 h-5 text-green-600 mt-0.5"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-green-900">File berhasil diupload!</p>
+                                    <p class="text-xs text-green-700 mt-1" id="uploadDetails"></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Format Template -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-600"></i>
+                            Format Template
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-4">File harus mengandung kolom berikut:</p>
+                        <div class="bg-slate-50 rounded-lg p-4 font-mono text-xs overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-slate-700">
+                                        <th class="text-left p-2 border-b">NSM</th>
+                                        <th class="text-left p-2 border-b">Nama Madrasah</th>
+                                        <th class="text-left p-2 border-b">Kecamatan</th>
+                                        <th class="text-left p-2 border-b">Jumlah Siswa</th>
+                                        <th class="text-left p-2 border-b">Operator</th>
+                                        <th class="text-left p-2 border-b">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-slate-500">
+                                    <tr>
+                                        <td class="p-2">121235130001</td>
+                                        <td class="p-2">MTs Negeri 1</td>
+                                        <td class="p-2">Kraksaan</td>
+                                        <td class="p-2">385</td>
+                                        <td class="p-2">Ahmad Fauzi</td>
+                                        <td class="p-2">sudah-tarik</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <button class="mt-4 text-blue-600 hover:text-blue-700 text-sm font-medium flex items-center gap-2">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            Download Template Excel
+                        </button>
+                    </div>
+                </div>
+                <!-- END MASTER DATA SECTION -->
+
+                <!-- PENGATURAN SECTION -->
+                <div id="admin-section-pengaturan" class="hidden-section">
+                    <div class="mb-8">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-2">Pengaturan Sistem</h2>
+                        <p class="text-slate-600">Konfigurasi dan preferensi aplikasi</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Pengaturan Umum -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i data-lucide="sliders" class="w-5 h-5 text-blue-600"></i>
+                                Pengaturan Umum
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Tahun Pelajaran</label>
+                                    <select class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                        <option>2025/2026</option>
+                                        <option>2024/2025</option>
+                                        <option>2023/2024</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Kabupaten/Kota</label>
+                                    <input type="text" value="Probolinggo" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Batas Waktu Penarikan</label>
+                                    <input type="date" value="2026-01-25" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notifikasi -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i data-lucide="bell" class="w-5 h-5 text-blue-600"></i>
+                                Notifikasi
+                            </h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Email Notifikasi</p>
+                                        <p class="text-xs text-slate-500">Terima notifikasi via email</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-slate-700">Reminder Otomatis</p>
+                                        <p class="text-xs text-slate-500">Pengingat untuk madrasah yang belum tarik</p>
+                                    </div>
+                                    <label class="relative inline-flex items-center cursor-pointer">
+                                        <input type="checkbox" checked class="sr-only peer">
+                                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Backup & Restore -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i data-lucide="database" class="w-5 h-5 text-blue-600"></i>
+                                Backup & Restore
+                            </h3>
+                            <div class="space-y-3">
+                                <button class="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 flex items-center justify-center gap-2">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                    Backup Database
+                                </button>
+                                <button class="w-full bg-slate-100 text-slate-700 px-4 py-2.5 rounded-lg hover:bg-slate-200 flex items-center justify-center gap-2">
+                                    <i data-lucide="upload" class="w-4 h-4"></i>
+                                    Restore Database
+                                </button>
+                                <p class="text-xs text-slate-500 text-center mt-2">Backup terakhir: 15 Des 2025, 14:30</p>
+                            </div>
+                        </div>
+
+                        <!-- Akun Admin -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="font-bold text-lg mb-4 flex items-center gap-2">
+                                <i data-lucide="user-cog" class="w-5 h-5 text-blue-600"></i>
+                                Akun Admin
+                            </h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Nama Admin</label>
+                                    <input type="text" value="Administrator" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                                    <input type="email" value="admin@kemenagprob.go.id" class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                </div>
+                                <button class="w-full bg-slate-700 text-white px-4 py-2.5 rounded-lg hover:bg-slate-800 flex items-center justify-center gap-2">
+                                    <i data-lucide="key" class="w-4 h-4"></i>
+                                    Ganti Password
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button class="px-6 py-2.5 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50">
+                            Batal
+                        </button>
+                        <button class="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+                <!-- END PENGATURAN SECTION -->
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Form (Hidden by default) -->
+    <div id="entryModal" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"></div>
+        <div class="fixed inset-0 z-10 overflow-y-auto">
+            <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div class="relative transform overflow-hidden rounded-xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg">
+                    <form id="dataForm" onsubmit="handleFormSubmit(event)">
+                        <input type="hidden" id="editIndex" value="-1">
+                        <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                            <div class="sm:flex sm:items-start">
+                                <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                                    <h3 class="text-xl font-semibold leading-6 text-slate-900 mb-6" id="modalTitle">Input Data Baru</h3>
+                                    
+                                    <div class="grid grid-cols-1 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">NSM</label>
+                                            <input type="text" id="inputNsm" required class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Madrasah</label>
+                                            <input type="text" id="inputNama" required class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        </div>
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="block text-sm font-medium text-slate-700 mb-1">Kecamatan</label>
+                                                <input type="text" id="inputKecamatan" required class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                            </div>
+                                            <div>
+                                                <label class="block text-sm font-medium text-slate-700 mb-1">Jumlah Siswa</label>
+                                                <input type="number" id="inputSiswa" required class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">Nama Operator</label>
+                                            <input type="text" id="inputOperator" class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">Status Aktivitas</label>
+                                            <select id="inputStatus" class="w-full rounded-md border-slate-300 border px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                                <option value="sudah-tarik">Sudah Tarik</option>
+                                                <option value="belum-tarik">Belum Tarik</option>
+                                                <option value="belum-login">Belum Login</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                            <button type="submit" class="inline-flex w-full justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 sm:ml-3 sm:w-auto">Simpan Data</button>
+                            <button type="button" onclick="closeModal()" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 sm:mt-0 sm:w-auto">Batal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data
+        let madrasahData = [
+            { nsm: '121235130001', nama: 'MTs Negeri 1 Probolinggo', kecamatan: 'Kraksaan', siswa: 385, operator: 'Ahmad Fauzi', status: 'sudah-tarik' },
+            { nsm: '121235130002', nama: 'MTs Negeri 2 Probolinggo', kecamatan: 'Dringu', siswa: 312, operator: 'Siti Aminah', status: 'sudah-tarik' },
+            { nsm: '121235130003', nama: 'MTs Al-Hidayah', kecamatan: 'Paiton', siswa: 178, operator: 'M. Ridwan', status: 'belum-tarik' },
+            { nsm: '121235130004', nama: 'MTs Nurul Jadid', kecamatan: 'Paiton', siswa: 456, operator: 'Nur Halimah', status: 'sudah-tarik' },
+            { nsm: '121235130005', nama: 'MTs Darul Ulum', kecamatan: 'Tegalsiwalan', siswa: 89, operator: '-', status: 'belum-login' },
+            { nsm: '121235130006', nama: 'MTs Miftahul Ulum', kecamatan: 'Gending', siswa: 134, operator: 'Hasan Basri', status: 'sudah-tarik' },
+            { nsm: '121235130007', nama: 'MTs Salafiyah Syafi\'iyah', kecamatan: 'Sukapura', siswa: 267, operator: 'Fatimah Zahra', status: 'belum-tarik' },
+            { nsm: '121235130008', nama: 'MTs Al-Amien', kecamatan: 'Leces', siswa: 198, operator: 'Abdul Ghofur', status: 'sudah-tarik' },
+            { nsm: '121235130009', nama: 'MTs Raudlatul Muta\'alimin', kecamatan: 'Bantaran', siswa: 76, operator: '-', status: 'belum-login' },
+            { nsm: '121235130010', nama: 'MTs Al-Falah', kecamatan: 'Tongas', siswa: 145, operator: 'Khoirul Anam', status: 'sudah-tarik' },
+            { nsm: '121235130011', nama: 'MTs Zainul Hasan', kecamatan: 'Krucil', siswa: 213, operator: 'Nur Aini', status: 'belum-tarik' },
+            { nsm: '121235130012', nama: 'MTs Al-Huda', kecamatan: 'Tiris', siswa: 167, operator: 'M. Yasin', status: 'sudah-tarik' }
+        ];
+
+        // Spreadsheet-like table rendering with inline editing
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table-body');
+            const searchTerm = document.getElementById('admin-search').value.toLowerCase();
+            
+            tbody.innerHTML = '';
+
+            // Update Admin Stats
+            document.getElementById('admin-count-total').innerText = madrasahData.length;
+            document.getElementById('admin-count-verified').innerText = madrasahData.filter(d => d.status === 'sudah-tarik').length;
+            document.getElementById('admin-count-pending').innerText = madrasahData.filter(d => d.status !== 'sudah-tarik').length;
+
+            const filteredData = madrasahData.filter(item => 
+                item.nama.toLowerCase().includes(searchTerm) || 
+                item.nsm.includes(searchTerm) ||
+                item.operator.toLowerCase().includes(searchTerm)
+            );
+
+            filteredData.forEach((item, index) => {
+                // Find actual index in original array for editing
+                const realIndex = madrasahData.indexOf(item);
+                
+                const row = `
+                    <tr class="hover:bg-slate-50 border-b border-slate-100 last:border-0">
+                        <td class="px-6 py-2 font-mono text-xs text-slate-500 spreadsheet-cell" 
+                            data-field="nsm" data-index="${realIndex}">${item.nsm}</td>
+                        <td class="px-6 py-2 font-medium text-slate-900 spreadsheet-cell" 
+                            data-field="nama" data-index="${realIndex}">${item.nama}</td>
+                        <td class="px-6 py-2 text-slate-600 spreadsheet-cell" 
+                            data-field="kecamatan" data-index="${realIndex}">${item.kecamatan}</td>
+                        <td class="px-6 py-2 text-slate-600 spreadsheet-cell" 
+                            data-field="operator" data-index="${realIndex}">${item.operator}</td>
+                        <td class="px-6 py-2 text-center font-semibold spreadsheet-cell" 
+                            data-field="siswa" data-index="${realIndex}">${item.siswa}</td>
+                        <td class="px-6 py-2 spreadsheet-cell status-cell" 
+                            data-field="status" data-index="${realIndex}">${getStatusBadge(item.status)}</td>
+                        <td class="px-6 py-2 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="deleteData(${realIndex})" class="p-1.5 bg-red-50 text-red-600 rounded hover:bg-red-100 transition-colors" title="Hapus">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+            lucide.createIcons();
+            
+            // Add event listeners for inline editing
+            document.querySelectorAll('.spreadsheet-cell').forEach(cell => {
+                cell.addEventListener('dblclick', function() {
+                    const field = this.dataset.field;
+                    const index = parseInt(this.dataset.index);
+                    startEditing(this, field, index, item);
+                });
+            });
+        }
+
+        // Inline editing functionality
+        let currentEditingCell = null;
+
+        function startEditing(cell, field, index) {
+            if (currentEditingCell === cell) return;
+            
+            const originalValue = cell.innerHTML;
+            let inputType = 'text';
+            let inputValue = '';
+            
+            // Extract value from cell (handle badges specially)
+            if (field === 'status') {
+                // Extract status from badge
+                const status = cell.querySelector('span') ? 
+                    cell.querySelector('span').classList.contains('bg-green-100') ? 'sudah-tarik' :
+                    cell.querySelector('span').classList.contains('bg-yellow-100') ? 'belum-tarik' : 'belum-login' :
+                    ' sudah-tarik'; // fallback
+                inputValue = status;
+                inputType = 'select';
+            } else {
+                inputValue = cell.innerText.trim();
+                
+                // Special handling for numeric fields
+                if (field === 'nsm' || field === 'siswa') {
+                    inputType = 'number';
+                }
+            }
+            
+            // Store current editing cell
+            currentEditingCell = cell;
+            
+            // Create editor element
+            let editorHTML = '';
+            if (inputType === 'select') {
+                editorHTML = `
+                    <select class="w-full px-2 py-1 border border-slate-300 rounded">
+                        <option value="sudah-tarik" ${inputValue === 'sudah-tarik' ? 'selected' : ''}>Sudah Tarik</option>
+                        <option value="belum-tarik" ${inputValue === 'belum-tarik' ? 'selected' : ''}>Belum Tarik</option>
+                        <option value="belum-login" ${inputValue === 'belum-login' ? 'selected' : ''}>Belum Login</option>
+                    </select>
+                `;
+            } else {
+                editorHTML = `
+                    <input type="${inputType}" class="w-full px-2 py-1 border border-slate-300 rounded" 
+                           value="${inputValue}" ${inputType === 'number' ? 'min="0"' : ''}>
+                `;
+            }
+            
+            cell.innerHTML = editorHTML;
+            
+            // Focus and select the input/select
+            const editor = cell.querySelector('input, select');
+            editor.focus();
+            if (inputType === 'text') {
+                editor.select();
+            }
+            
+            // Add event listeners for saving or canceling
+            editor.addEventListener('blur', () => saveEdit(cell, field, index, originalValue));
+            editor.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    saveEdit(cell, field, index, originalValue);
+                } else if (e.key === 'Escape') {
+                    cancelEdit(cell, originalValue);
+                }
+            });
+        }
+
+        function saveEdit(cell, field, index, originalValue) {
+            if (!currentEditingCell || currentEditingCell !== cell) return;
+            
+            const editor = cell.querySelector('input, select');
+            let newValue = editor.value.trim();
+            
+            // Validation
+            if (field === 'nsm' && !/^\d+$/.test(newValue)) {
+                alert('NSM harus berupa angka');
+                cell.innerHTML = originalValue;
+                currentEditingCell = null;
+                return;
+            }
+            
+            if (field === 'siswa' && isNaN(newValue)) {
+                alert('Jumlah siswa harus berupa angka');
+                cell.innerHTML = originalValue;
+                currentEditingCell = null;
+                return;
+            }
+            
+            // Update data model
+            if (field === 'status') {
+                madrasahData[index].status = newValue;
+            } else {
+                madrasahData[index][field] = newValue;
+            }
+            
+            // Update UI
+            renderAdminTable();
+            renderPublicTable(); // Sync public view
+            
+            currentEditingCell = null;
+        }
+
+        function cancelEdit(cell, originalValue) {
+            if (currentEditingCell && currentEditingCell === cell) {
+                cell.innerHTML = originalValue;
+                currentEditingCell = null;
+            }
+        }
+
+        // --- View Switching ---
+        function switchView(viewName) {
+            const publicView = document.getElementById('public-view');
+            const adminView = document.getElementById('admin-view');
+            const btnPublic = document.getElementById('btn-view-public');
+            const btnAdmin = document.getElementById('btn-view-admin');
+
+            if (viewName === 'admin') {
+                publicView.classList.add('hidden-section');
+                adminView.classList.remove('hidden-section');
+                
+                btnAdmin.classList.add('bg-blue-50', 'text-blue-600');
+                btnAdmin.classList.remove('text-slate-600');
+                btnPublic.classList.remove('bg-blue-50', 'text-blue-600');
+                btnPublic.classList.add('text-slate-600');
+                
+                renderAdminTable();
+            } else {
+                adminView.classList.add('hidden-section');
+                publicView.classList.remove('hidden-section');
+
+                btnPublic.classList.add('bg-blue-50', 'text-blue-600');
+                btnPublic.classList.remove('text-slate-600');
+                btnAdmin.classList.remove('bg-blue-50', 'text-blue-600');
+                btnAdmin.classList.add('text-slate-600');
+                
+                renderPublicTable();
+            }
+        }
+
+        // --- Helper: Status HTML ---
+        function getStatusBadge(status) {
+            if (status === 'sudah-tarik') return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Sudah Tarik</span>';
+            if (status === 'belum-tarik') return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Belum Tarik</span>';
+            return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Belum Login</span>';
+        }
+
+        // --- Public Logic ---
+        function renderPublicTable() {
+            const tbody = document.getElementById('public-table-body');
+            const filterStatus = document.getElementById('public-filter-status').value;
+            const searchTerm = document.getElementById('public-search').value.toLowerCase();
+            const emptyState = document.getElementById('public-empty-state');
+            
+            tbody.innerHTML = '';
+            
+            let filteredData = madrasahData.filter(item => {
+                const matchesStatus = filterStatus === '' || item.status === filterStatus;
+                const matchesSearch = item.nama.toLowerCase().includes(searchTerm) || 
+                                      item.nsm.includes(searchTerm) || 
+                                      item.kecamatan.toLowerCase().includes(searchTerm);
+                return matchesStatus && matchesSearch;
+            });
+
+            if (filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+            } else {
+                emptyState.classList.add('hidden');
+                filteredData.forEach((item, index) => {
+                    const row = `
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-6 py-4 font-medium text-slate-900">${index + 1}</td>
+                            <td class="px-6 py-4 font-mono text-xs text-slate-500">${item.nsm}</td>
+                            <td class="px-6 py-4 font-medium">${item.nama}</td>
+                            <td class="px-6 py-4">${item.kecamatan}</td>
+                            <td class="px-6 py-4 text-center font-bold text-slate-700">${item.siswa}</td>
+                            <td class="px-6 py-4">${getStatusBadge(item.status)}</td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+            updateStats();
+        }
+
+        function updateStats() {
+            const total = madrasahData.length;
+            const sudah = madrasahData.filter(d => d.status === 'sudah-tarik').length;
+            const belum = madrasahData.filter(d => d.status === 'belum-tarik').length;
+            const login = madrasahData.filter(d => d.status === 'belum-login').length;
+
+            document.getElementById('stat-total').innerText = total;
+            document.getElementById('stat-sudah').innerText = sudah;
+            document.getElementById('stat-belum').innerText = belum;
+            document.getElementById('stat-login').innerText = login;
+        }
+
+        function filterPublicStatus(status) {
+            document.getElementById('public-filter-status').value = status;
+            renderPublicTable();
+            // Scroll to table on mobile
+            if(window.innerWidth < 1024) {
+                document.querySelector('table').scrollIntoView({behavior: 'smooth'});
+            }
+        }
+
+        // --- Admin Logic ---
+
+        function deleteData(index) {
+            if(confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+                madrasahData.splice(index, 1);
+                renderAdminTable();
+                renderPublicTable();
+            }
+        }
+
+        // --- Admin Section Navigation ---
+        function showAdminSection(sectionName) {
+            // Hide all sections
+            document.getElementById('admin-section-dashboard').classList.add('hidden-section');
+            document.getElementById('admin-section-master-data').classList.add('hidden-section');
+            document.getElementById('admin-section-pengaturan').classList.add('hidden-section');
+            
+            // Remove active state from all nav items
+            document.getElementById('nav-dashboard').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('nav-dashboard').classList.add('hover:bg-slate-800');
+            document.getElementById('nav-master-data').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('nav-master-data').classList.add('hover:bg-slate-800');
+            document.getElementById('nav-pengaturan').classList.remove('bg-blue-600', 'text-white');
+            document.getElementById('nav-pengaturan').classList.add('hover:bg-slate-800');
+            
+            // Show selected section
+            if (sectionName === 'dashboard') {
+                document.getElementById('admin-section-dashboard').classList.remove('hidden-section');
+                document.getElementById('nav-dashboard').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('nav-dashboard').classList.remove('hover:bg-slate-800');
+            } else if (sectionName === 'master-data') {
+                document.getElementById('admin-section-master-data').classList.remove('hidden-section');
+                document.getElementById('nav-master-data').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('nav-master-data').classList.remove('hover:bg-slate-800');
+            } else if (sectionName === 'pengaturan') {
+                document.getElementById('admin-section-pengaturan').classList.remove('hidden-section');
+                document.getElementById('nav-pengaturan').classList.add('bg-blue-600', 'text-white');
+                document.getElementById('nav-pengaturan').classList.remove('hover:bg-slate-800');
+            }
+            
+            // Reinitialize icons
+            lucide.createIcons();
+        }
+
+        // --- File Upload Handler ---
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('Ukuran file terlalu besar! Maksimal 5MB.');
+                return;
+            }
+
+            // Validate file type
+            const allowedTypes = ['text/csv', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'];
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(csv|xlsx|xls)$/)) {
+                alert('Format file tidak valid! Gunakan CSV atau Excel (.xlsx, .xls)');
+                return;
+            }
+
+            // Show progress
+            const progressDiv = document.getElementById('uploadProgress');
+            const successDiv = document.getElementById('uploadSuccess');
+            const progressBar = document.getElementById('progressBar');
+            
+            successDiv.classList.add('hidden');
+            progressDiv.classList.remove('hidden');
+
+            // Simulate upload progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressDiv.classList.add('hidden');
+                        successDiv.classList.remove('hidden');
+                        document.getElementById('uploadDetails').textContent = `File: ${file.name} (${(file.size / 1024).toFixed(2)} KB) - ${new Date().toLocaleString('id-ID')}`;
+                        
+                        // Here you would normally process the CSV/Excel file
+                        // For demo purposes, we'll just show success message
+                        lucide.createIcons();
+                    }, 500);
+                }
+            }, 200);
+        }
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            
+            // Render Initial Public View
+            renderPublicTable();
+
+            // Event Listeners for Filters
+            document.getElementById('public-search').addEventListener('input', renderPublicTable);
+            document.getElementById('public-filter-status').addEventListener('change', renderPublicTable);
+            
+            // Event Listener for Admin Search
+            document.getElementById('admin-search').addEventListener('input', renderAdminTable);
+        });
+
+    </script>
+</body>
+</html>
